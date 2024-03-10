@@ -193,7 +193,7 @@ public:
         jumpTable["JNE"] = "101";
         jumpTable["JLE"] = "110";
         jumpTable["JMP"] = "111";
-        
+
     }
 
     string dest(string mnemonic) {
@@ -217,7 +217,7 @@ private:
 int main(int argc, char *argv[]) {
     string filename = argv[1];
     // string filename = "Add.asm";
-    string outputFilename = filename.substr(0, filename.find('.')) + ".hack";
+    string outputFilename = filename.substr(0, filename.rfind('.')) + ".hack";
     ofstream output(outputFilename);
     SymbolTable symbolTable;
     Parser parser(filename);
