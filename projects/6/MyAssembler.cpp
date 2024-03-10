@@ -146,108 +146,72 @@ private:
 
 class Code {
 public:
+    Code(){
+        destTable[""] = "000";
+        destTable["M"] = "001";
+        destTable["D"] = "010";
+        destTable["MD"] = "011";
+        destTable["A"] = "100";
+        destTable["AM"] = "101";
+        destTable["AD"] = "110";
+        destTable["AMD"] = "111";
+
+        compTable["0"] = "0101010";
+        compTable["1"] = "0111111";
+        compTable["-1"] = "0111010";
+        compTable["D"] = "0001100";
+        compTable["A"] = "0110000";
+        compTable["!D"] = "0001101";
+        compTable["!A"] = "0110001";
+        compTable["-D"] = "0001111";
+        compTable["-A"] = "0110011";
+        compTable["D+1"] = "0011111";
+        compTable["A+1"] = "0110111";
+        compTable["D-1"] = "0001110";
+        compTable["A-1"] = "0110010";
+        compTable["D+A"] = "0000010";
+        compTable["D-A"] = "0010011";
+        compTable["A-D"] = "0000111";
+        compTable["D&A"] = "0000000";
+        compTable["D|A"] = "0010101";
+        compTable["M"] = "1110000";
+        compTable["!M"] = "1110001";
+        compTable["-M"] = "1110011";
+        compTable["M+1"] = "1110111";
+        compTable["M-1"] = "1110010";
+        compTable["D+M"] = "1000010";
+        compTable["D-M"] = "1010011";
+        compTable["M-D"] = "1000111";
+        compTable["D&M"] = "1000000";
+        compTable["D|M"] = "1010101";
+
+        jumpTable[""] = "000";
+        jumpTable["JGT"] = "001";
+        jumpTable["JEQ"] = "010";
+        jumpTable["JGE"] = "011";
+        jumpTable["JLT"] = "100";
+        jumpTable["JNE"] = "101";
+        jumpTable["JLE"] = "110";
+        jumpTable["JMP"] = "111";
+        
+    }
+
     string dest(string mnemonic) {
-        if (mnemonic == "") {
-            return "000";
-        } else if (mnemonic == "M") {
-            return "001";
-        } else if (mnemonic == "D") {
-            return "010";
-        } else if (mnemonic == "MD") {
-            return "011";
-        } else if (mnemonic == "A") {
-            return "100";
-        } else if (mnemonic == "AM") {
-            return "101";
-        } else if (mnemonic == "AD") {
-            return "110";
-        } else if (mnemonic == "AMD") {
-            return "111";
-        }
-        return "";
+        return destTable[mnemonic];
     }
 
     string comp(string mnemonic) {
-        if (mnemonic == "0") {
-            return "0101010";
-        } else if (mnemonic == "1") {
-            return "0111111";
-        } else if (mnemonic == "-1") {
-            return "0111010";
-        } else if (mnemonic == "D") {
-            return "0001100";
-        } else if (mnemonic == "A") {
-            return "0110000";
-        } else if (mnemonic == "!D") {
-            return "0001101";
-        } else if (mnemonic == "!A") {
-            return "0110001";
-        } else if (mnemonic == "-D") {
-            return "0001111";
-        } else if (mnemonic == "-A") {
-            return "0110011";
-        } else if (mnemonic == "D+1") {
-            return "0011111";
-        } else if (mnemonic == "A+1") {
-            return "0110111";
-        } else if (mnemonic == "D-1") {
-            return "0001110";
-        } else if (mnemonic == "A-1") {
-            return "0110010";
-        } else if (mnemonic == "D+A") {
-            return "0000010";
-        } else if (mnemonic == "D-A") {
-            return "0010011";
-        } else if (mnemonic == "A-D") {
-            return "0000111";
-        } else if (mnemonic == "D&A") {
-            return "0000000";
-        } else if (mnemonic == "D|A") {
-            return "0010101";
-        } else if (mnemonic == "M") {
-            return "1110000";
-        } else if (mnemonic == "!M") {
-            return "1110001";
-        } else if (mnemonic == "-M") {
-            return "1110011";
-        } else if (mnemonic == "M+1") {
-            return "1110111";
-        } else if (mnemonic == "M-1") {
-            return "1110010";
-        } else if (mnemonic == "D+M") {
-            return "1000010";
-        } else if (mnemonic == "D-M") {
-            return "1010011";
-        } else if (mnemonic == "M-D") {
-            return "1000111";
-        } else if (mnemonic == "D&M") {
-            return "1000000";
-        } else if (mnemonic == "D|M") {
-            return "1010101";
-        }
-        return "";
+        return compTable[mnemonic];
     }
 
     string jump(string mnemonic) {
-        if (mnemonic == "") {
-            return "000";
-        } else if (mnemonic == "JGT") {
-            return "001";
-        } else if (mnemonic == "JEQ") {
-            return "010";
-        } else if (mnemonic == "JGE") {
-            return "011";
-        } else if (mnemonic == "JLT") {
-            return "100";
-        } else if (mnemonic == "JNE") {
-            return "101";
-        } else if (mnemonic == "JLE") {
-            return "110";
-        } else if (mnemonic == "JMP") {
-            return "111";
-        }
-        return "";
+        return jumpTable[mnemonic];
     }
+
+private:
+    map<string, string> destTable;
+    map<string, string> compTable;
+    map<string, string> jumpTable;
 };
 
 int main(int argc, char *argv[]) {
