@@ -40,7 +40,7 @@ enum class Keyword {
 
 class JackTokenizer {
 public:
-    JackTokenizer(string &filename): file(filename) {
+    JackTokenizer(string &filename): file(filename) , _countLine(0) {
         advance();
     }
 
@@ -53,6 +53,7 @@ public:
         removeSpace(line);
         while(line.empty()&&hasMoreTokens()){
             getline(file,line);
+            _countLine++;
             removeComments(line);
             removeSpace(line);
             if(line.find("/*")!=string::npos){
@@ -168,6 +169,10 @@ public:
         return currentToken.substr(1,currentToken.length()-2);
     }
 
+    size_t countLine() {
+        return _countLine;
+    }
+
     ~JackTokenizer() {
         file.close();
     }
@@ -189,6 +194,7 @@ private:
     string currentToken;
     string line;
     ifstream file;
+    size_t _countLine;
 };
 
 class CompilationEngine {   
@@ -203,8 +209,7 @@ public:
         tokenizer.advance();
         file<<"<identifier> "<<tokenizer.identifier()<<" </identifier>"<<"\n";
         tokenizer.advance();
-        file<<"<symbol> { </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('{');
         while(tokenizer.tokenType()==TokenType::KEYWORD&&
               (tokenizer.keyWord()==Keyword::STATIC||tokenizer.keyWord()==Keyword::FIELD)){
             compileClassVarDec();
@@ -214,7 +219,7 @@ public:
                tokenizer.keyWord()==Keyword::METHOD)){
             compileSubroutine();
         }
-        file<<"<symbol> } </symbol>"<<"\n";
+        requireSymbol('}');
     }
 
     void compileClassVarDec() {
@@ -234,8 +239,7 @@ public:
             file<<"<identifier> "<<tokenizer.identifier()<<" </identifier>"<<"\n";
             tokenizer.advance();
         }
-        file<<"<symbol> ; </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(';');
     }
 
     void compileSubroutine() {
@@ -249,11 +253,9 @@ public:
         tokenizer.advance();
         file<<"<identifier> "<<tokenizer.identifier()<<" </identifier>"<<"\n";
         tokenizer.advance();
-        file<<"<symbol> ( </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('(');
         compileParameterList();
-        file<<"<symbol> ) </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(')');
         compileSubroutineBody();
     }
 
@@ -275,14 +277,12 @@ public:
     }
 
     void compileSubroutineBody() {
-        file<<"<symbol> { </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('{');
         while(tokenizer.tokenType()==TokenType::KEYWORD&&tokenizer.keyWord()==Keyword::VAR){
             compileVarDec();
         }
         compileStatements();
-        file<<"<symbol> } </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('}');
     }
 
     void compileVarDec() {
@@ -302,8 +302,7 @@ public:
             file<<"<identifier> "<<tokenizer.identifier()<<" </identifier>"<<"\n";
             tokenizer.advance();
         }
-        file<<"<symbol> ; </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(';');
     }
 
     void compileStatements() {
@@ -331,61 +330,48 @@ public:
             file<<"<symbol> [ </symbol>"<<"\n";
             tokenizer.advance();
             compileExpression();
-            file<<"<symbol> ] </symbol>"<<"\n";
-            tokenizer.advance();
+            requireSymbol(']');
         }
         file<<"<symbol> = </symbol>"<<"\n";
         tokenizer.advance();
         compileExpression();
-        file<<"<symbol> ; </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(';');
     }
 
     void compileIf() {
         file<<"<keyword> if </keyword>"<<"\n";
         tokenizer.advance();
-        file<<"<symbol> ( </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('(');
         compileExpression();
-        file<<"<symbol> ) </symbol>"<<"\n";
-        tokenizer.advance();
-        file<<"<symbol> { </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(')');
+        requireSymbol('{');
         compileStatements();
-        file<<"<symbol> } </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('}');
         if(tokenizer.tokenType()==TokenType::KEYWORD&&tokenizer.keyWord()==Keyword::ELSE){
             file<<"<keyword> else </keyword>"<<"\n";
             tokenizer.advance();
-            file<<"<symbol> { </symbol>"<<"\n";
-            tokenizer.advance();
+            requireSymbol('{');
             compileStatements();
-            file<<"<symbol> } </symbol>"<<"\n";
-            tokenizer.advance();
+            requireSymbol('}');
         }
     }
 
     void compileWhile() {
         file<<"<keyword> while </keyword>"<<"\n";
         tokenizer.advance();
-        file<<"<symbol> ( </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('(');
         compileExpression();
-        file<<"<symbol> ) </symbol>"<<"\n";
-        tokenizer.advance();
-        file<<"<symbol> { </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(')');
+        requireSymbol('{');
         compileStatements();
-        file<<"<symbol> } </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('}');
     }
 
     void compileDo() {
         file<<"<keyword> do </keyword>"<<"\n";
         tokenizer.advance();
         compileSubroutineCall();
-        file<<"<symbol> ; </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(';');
     }
 
     void compileReturn() {
@@ -394,8 +380,7 @@ public:
         if(tokenizer.tokenType()!=TokenType::SYMBOL){
             compileExpression();
         }
-        file<<"<symbol> ; </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(';');
     }
 
     void compileExpression() {
@@ -436,8 +421,7 @@ public:
                 file<<"<symbol> [ </symbol>"<<"\n";
                 tokenizer.advance();
                 compileExpression();
-                file<<"<symbol> ] </symbol>"<<"\n";
-                tokenizer.advance();
+                requireSymbol(']');
             }else if(tokenizer.symbol()=='('||tokenizer.symbol()=='.'){
                 compileSubroutineCall();
             }
@@ -445,8 +429,7 @@ public:
             file<<"<symbol> ( </symbol>"<<"\n";
             tokenizer.advance();
             compileExpression();
-            file<<"<symbol> ) </symbol>"<<"\n";
-            tokenizer.advance();
+            requireSymbol(')');
         }else if(tokenizer.symbol()=='-'||tokenizer.symbol()=='~'){
             file<<"<symbol> "<<tokenizer.symbol()<<" </symbol>"<<"\n";
             tokenizer.advance();
@@ -465,11 +448,9 @@ public:
             file<<"<identifier> "<<tokenizer.identifier()<<" </identifier>"<<"\n";
             tokenizer.advance();
         }
-        file<<"<symbol> ( </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol('(');
         compileExpressionList();
-        file<<"<symbol> ) </symbol>"<<"\n";
-        tokenizer.advance();
+        requireSymbol(')');
     }
 
     void compileExpressionList() {
@@ -487,6 +468,15 @@ public:
     }
 
 private:
+    void requireSymbol(char symbol) {
+        if (tokenizer.symbol() != symbol) {
+            throw runtime_error("Expected symbol: " + string(1, symbol) + " at line: " + to_string(tokenizer.countLine()));
+        } else {
+            file << "<symbol> " << symbol << " </symbol>" << "\n";
+            tokenizer.advance();
+        }
+    }
+
     JackTokenizer tokenizer;
     ofstream file;
 };
