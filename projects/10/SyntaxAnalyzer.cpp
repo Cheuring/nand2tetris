@@ -60,6 +60,7 @@ public:
                 string temp;
                 while(line.find("*/")==string::npos){
                     getline(file,temp);
+                    _countLine++;
                     line+=temp;
                 }
                 line=line.substr(0,line.find("/*"))+line.substr(line.find("*/")+2);
