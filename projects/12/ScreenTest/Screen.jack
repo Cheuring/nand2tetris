@@ -1,0 +1,209 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+    static boolean screenColor;
+    static Array screenAddr;
+    /** Initializes the Screen. */
+    function void init() {
+        let screenColor=true;
+        let screenAddr=16384;
+        return ;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int i;
+        let i=0;
+        while(i<8192){
+            let screenAddr[i]=false;
+            let i = i +1;
+        }
+        return ;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let screenColor=b;
+        return ;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        var int address;
+        let address=(32*y)+(x/16);
+        if(screenColor){
+            let screenAddr[address]=screenAddr[address] | Math.bit(x&15);
+        }else{
+            let screenAddr[address]=screenAddr[address] & ~Math.bit(x&15);
+        }
+        return ;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        var int dx,dy,a,b,diff;
+        if(x1>x2){
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+            let temp =y1;
+            let y1 =y2;
+            let y2 = temp;
+        }
+        let dx = x2 -x1;
+        let dy = y2 -y1;
+
+        if(dx =0){
+            do Screen.drawVerticalLine(x1,y1,y2);
+            return;
+        }
+        if(dy =0){
+            do Screen.drawHorizontalLine(x1,x2,y1);
+            return;
+        }
+        if(y2>y1){
+            while(~(a>dx)&~(b>dy)){
+                do Screen.drawPixel(x1+a,y1+b);
+                if(diff<0){
+                    let b =b+1;
+                    let diff =diff +dx;
+                }else{
+                    let a =a+1;
+                    let diff =diff -dy;
+                }
+            }
+        }else{
+            let dy =-dy;
+            while(~(a>dx)&~(b>dy)){
+                do Screen.drawPixel(x1+a,y1-b);
+                if(diff<0){
+                    let a =a+1;
+                    let diff =diff +dy;
+                }else{
+                    let b =b+1;
+                    let diff =diff -dx;
+                }
+            }
+        }
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     *  and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int temp;
+        if(y1>y2){
+            let temp=y1;
+            let y1=y2;
+            let y2=temp;
+        }
+        while(~(y1>y2)){
+            do Screen.drawHorizontalLine(x1,x2,y1);
+            let y1=y1+1;
+        }
+        return ;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        var int i, j; 
+        var int counter; 
+
+        let i = 0; 
+        let j = r; 
+        let counter = 3 - (r + r); 
+
+        do Screen.drawHorizontalLine(x - r, x + r, y); 
+
+        while (j > i) { 
+
+            if (counter < 0) { 
+                let counter = counter + 6 + i + i + i + i; 
+                let i = i + 1; 
+            } else { 
+                if ((counter > 0) & (j > i)) { 
+                        let j = j - 1; 
+                        let counter = (counter + 4) - (j + j + j + j); 
+                } 
+            } 
+
+            do Screen.drawHorizontalLine(x - i, x + i, y + j); 
+            do Screen.drawHorizontalLine(x - i, x + i, y - j); 
+            do Screen.drawHorizontalLine(x - j, x + j, y + i); 
+            do Screen.drawHorizontalLine(x - j, x + j, y - i); 
+
+        } 
+        return; 
+    }
+
+    function void drawHorizontalLine(int x1,int x2,int y){
+        var int temp,addr1,addr2,leftmask,rightmask,mask;
+        if(x1>x2){
+            let temp=x1;
+            let x1=x2;
+            let x2=temp;
+        }
+        let addr1 = (y*32) + (x1/16);
+        let addr2 = (y*32) + (x2/16);
+        let leftmask = ~(Math.bit(x1&15)-1);
+        let rightmask = Math.bit((x2&15)+1) - 1;
+
+        if(addr1=addr2){
+            let mask = leftmask & rightmask ;
+            if(screenColor){
+                let screenAddr[addr1]=screenAddr[addr1] | mask;
+            }else {
+                let screenAddr[addr2]=screenAddr[addr1] & ~mask;
+            }
+            return;
+        }else {
+            if(screenColor){
+                let screenAddr[addr1]=screenAddr[addr1] | leftmask;
+                let screenAddr[addr2]=screenAddr[addr2] | rightmask;
+            }else {
+                let screenAddr[addr1]=screenAddr[addr1] & ~leftmask;
+                let screenAddr[addr2]=screenAddr[addr2] & ~rightmask;
+            }
+        }
+
+        if((addr2-addr1)>1){
+            let addr1 = addr1 + 1;
+            while(addr2>addr1){
+                let screenAddr[addr1] = screenColor;
+                let addr1 = addr1 + 1;
+            }
+        }
+        return;
+    }
+
+    function void drawVerticalLine(int x,int y1,int y2){
+        var int temp, address, mask;
+        if(y1>y2){
+            let temp=y1;
+            let y1=y2;
+            let y2=temp;
+        }
+        let address=(y1*32) + (x/16);
+        let mask=Math.bit(x&15);
+
+        while(~(y1>y2)){
+            if(screenColor){
+                let screenAddr[address] = screenAddr[address] | mask;
+            }else {
+                let screenAddr[address] = screenAddr[address] & ~mask;
+            }
+            let address = address + 32;
+            let y1 = y1 + 1;
+        }
+        return ;
+    }
+}
